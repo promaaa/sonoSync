@@ -12,7 +12,8 @@ export function TransferFlow() {
         sourcePlatform,
         destinationPlatform,
         setDestinationPlatform,
-        spotifyToken
+        spotifyToken,
+        deezerArl
     } = useMusicStore();
 
     const [isTransferring, setIsTransferring] = useState(false);
@@ -32,7 +33,8 @@ export function TransferFlow() {
             setStatus("transferring");
             // Pass spotifyToken if available (Client-Side Auth)
             const token = spotifyToken || undefined;
-            const result = await transferPlaylist(selectedPlaylist.id, destinationPlatform, token);
+            const arl = deezerArl || undefined;
+            const result = await transferPlaylist(selectedPlaylist.id, destinationPlatform, token, arl);
 
             setStatus("done");
             console.log("Transfer result:", result);

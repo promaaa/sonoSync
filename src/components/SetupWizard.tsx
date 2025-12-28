@@ -27,23 +27,25 @@ const INSTRUCTIONS: Record<string, { title: string, steps: string[], links: { la
         links: [{ label: "Open Spotify Dashboard", url: "https://developer.spotify.com/dashboard" }]
     },
     deezer: {
-        title: "Deezer Setup",
+        title: "Deezer Setup (Manual)",
         steps: [
-            "Go to Deezer for Developers.",
-            "Create a new Application.",
-            "Set Redirect URL to: http://localhost:3000/api/auth/callback/deezer",
-            "Copy the App ID (Client ID) and Secret Key (Client Secret)."
+            "Since Deezer closed their API to new apps, we use the 'ARL Cookie' method.",
+            "Open Deezer.com in a new tab and log in.",
+            "Open Developer Tools (F12) > Application > Cookies > www.deezer.com.",
+            "Find the cookie named 'arl' and copy its value (it's a long string).",
+            "Paste the 'arl' value below."
         ],
-        links: [{ label: "Open Deezer Developers", url: "https://developers.deezer.com/myapps" }]
+        links: [{ label: "Open Deezer", url: "https://www.deezer.com" }]
     },
     youtube: {
         title: "YouTube Music Setup",
         steps: [
             "Go to Google Cloud Console > APIs & Services > Credentials.",
             "Create Credentials > OAuth Client ID (Web Application).",
-            "Add Redirect URI: http://localhost:3000/api/auth/callback/google",
+            "Add Redirect URI: http://127.0.0.1:3000/api/auth/callback/google",
             "Copy Client ID and Client Secret.",
-            "Ensure 'YouTube Data API v3' is enabled in the Library."
+            "IMPORTANT: Go to OAuth Consent Screen > Test Users and ADD YOUR EMAIL.",
+            "OR click 'Publish App' to bypass the 'Access Blocked' error."
         ],
         links: [
             { label: "Open Google Credentials", url: "https://console.cloud.google.com/apis/credentials" },
@@ -68,8 +70,14 @@ const INSTRUCTIONS: Record<string, { title: string, steps: string[], links: { la
 export function SetupWizard({ platform, isOpen, onClose, onSuccess }: SetupWizardProps) {
     const [clientId, setClientId] = useState("");
     const [clientSecret, setClientSecret] = useState("");
+    // Deezer specific
+    const [arl, setArl] = useState("");
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+
+    // Import store to save ARL
+    const { setDeezerArl } = require("@/store/useMusicStore").useMusicStore();
 
     if (!isOpen) return null;
 
@@ -80,13 +88,27 @@ export function SetupWizard({ platform, isOpen, onClose, onSuccess }: SetupWizar
         setLoading(true);
         setError("");
 
+        if (platform === 'deezer') {
+            // Save ARL to store/localstorage
+            if (!arl) {
+                setError("ARL is required");
+                setLoading(false);
+                return;
+            }
+            setDeezerArl(arl);
+            localStorage.setItem('deezer_arl', arl);
+            onSuccess();
+            onClose();
+            setLoading(false);
+            return;
+        }
+
         const res = await updateProviderConfig(platform, clientId, clientSecret);
 
         if (res.success) {
             onSuccess();
             onClose();
-            // Force reload to pick up env vars? 
-            // Actually next.js dev server might need a restart signal or manual restart.
+            // Force reload or just alert
             alert("Configuration saved! You may need to RESTART the server terminal (Ctrl+C then npm run dev) for changes to take effect.");
         } else {
             setError(res.error || "Failed to save");
@@ -103,7 +125,7 @@ export function SetupWizard({ platform, isOpen, onClose, onSuccess }: SetupWizar
                     </div>
                     <div>
                         <h2 className="text-xl font-bold">{config.title}</h2>
-                        <p className="text-sm text-muted-foreground">Configure API keys to enable access</p>
+                        <p className="text-sm text-muted-foreground">Configure access</p>
                     </div>
                 </div>
 
@@ -123,26 +145,41 @@ export function SetupWizard({ platform, isOpen, onClose, onSuccess }: SetupWizar
                 </div>
 
                 <div className="space-y-4">
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium">Client ID</label>
-                        <input
-                            type="text"
-                            value={clientId}
-                            onChange={e => setClientId(e.target.value)}
-                            className="w-full rounded-md border border-white/10 bg-black/20 px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                            placeholder="Paste Client ID here"
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium">Client Secret</label>
-                        <input
-                            type="password"
-                            value={clientSecret}
-                            onChange={e => setClientSecret(e.target.value)}
-                            className="w-full rounded-md border border-white/10 bg-black/20 px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                            placeholder="Paste Client Secret here"
-                        />
-                    </div>
+                    {platform === 'deezer' ? (
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">ARL Cookie</label>
+                            <input
+                                type="text"
+                                value={arl}
+                                onChange={e => setArl(e.target.value)}
+                                className="w-full rounded-md border border-white/10 bg-black/20 px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                                placeholder="Paste ARL here..."
+                            />
+                        </div>
+                    ) : (
+                        <>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Client ID</label>
+                                <input
+                                    type="text"
+                                    value={clientId}
+                                    onChange={e => setClientId(e.target.value)}
+                                    className="w-full rounded-md border border-white/10 bg-black/20 px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                                    placeholder="Paste Client ID here"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Client Secret</label>
+                                <input
+                                    type="password"
+                                    value={clientSecret}
+                                    onChange={e => setClientSecret(e.target.value)}
+                                    className="w-full rounded-md border border-white/10 bg-black/20 px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                                    placeholder="Paste Client Secret here"
+                                />
+                            </div>
+                        </>
+                    )}
                 </div>
 
                 {error && <p className="text-red-500 text-sm mt-4">{error}</p>}
@@ -157,10 +194,10 @@ export function SetupWizard({ platform, isOpen, onClose, onSuccess }: SetupWizar
                     </button>
                     <button
                         onClick={handleSave}
-                        disabled={loading || !clientId || !clientSecret}
+                        disabled={loading || (platform === 'deezer' ? !arl : (!clientId || !clientSecret))}
                         className="bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 text-sm font-medium rounded-md transition-colors disabled:opacity-50"
                     >
-                        {loading ? "Saving..." : "Save & Restart"}
+                        {loading ? "Saving..." : "Save"}
                     </button>
                 </div>
             </div>

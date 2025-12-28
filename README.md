@@ -1,36 +1,88 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SonoSync (Open Source Soundiiz Alternative)
 
-## Getting Started
+**SonoSync** is a modern, free, and open-source web application designed to help you transfer your music playlists between different streaming platforms. Built as an alternative to paid services like Soundiiz, SonoSync runs locally or on your own server, giving you full control over your data.
 
-First, run the development server:
+## 🚀 Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+*   **Playlist Transfer**: Move your favorite playlists seamlessly between supported platforms.
+*   **Modern UI**: A sleek, responsive, and beautiful interface built with Next.js and Tailwind CSS.
+*   **Advanced Matching**: Intelligent track matching algorithm (ISRC, Artist, Title fuzziness) to find the right songs on the destination platform.
+*   **Privacy Focused**: Runs locally. Your credentials (ARL cookies, tokens) stay on your machine.
+*   **Platform Support**:
+    *   ✅ **Spotify** (Full support: Read/Write via official API & PKCE)
+    *   ✅ **Deezer** (Full support: Read/Write via ARL Cookie workaround)
+    *   ✅ **YouTube Music** (Full support: Read/Write via YouTube Data API v3)
+    *   🚧 **Apple Music** (Coming Soon)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🛠️ Tech Stack
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+*   **Framework**: [Next.js 15](https://nextjs.org/) (App Router)
+*   **Styling**: Tailwind CSS
+*   **Auth**: [Auth.js (NextAuth v5)](https://authjs.dev/) + Client-side PKCE for Spotify
+*   **State Management**: Zustand
+*   **Language**: TypeScript
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📦 Installation & Setup
 
-## Learn More
+1.  **Clone the repository**
+    ```bash
+    git clone https://github.com/yourusername/sonosync.git
+    cd sonosync
+    ```
 
-To learn more about Next.js, take a look at the following resources:
+2.  **Install dependencies**
+    ```bash
+    npm install
+    ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+3.  **Configure Environment**
+    Create a `.env.local` file in the root directory:
+    ```env
+    AUTH_SECRET="your-random-secret-key"
+    NEXTAUTH_URL="http://127.0.0.1:3000"
+    
+    # Spotify (Create app at developer.spotify.com)
+    SPOTIFY_CLIENT_ID="your_spotify_id"
+    SPOTIFY_CLIENT_SECRET="your_spotify_secret"
+    
+    # Google/YouTube (Create app at console.cloud.google.com)
+    GOOGLE_CLIENT_ID="your_google_id"
+    GOOGLE_CLIENT_SECRET="your_google_secret"
+    ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+4.  **Run the development server**
+    ```bash
+    npm run dev
+    ```
 
-## Deploy on Vercel
+5.  **Open the app**
+    Visit `http://127.0.0.1:3000` in your browser.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🔑 Platform Setup Guide
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Spotify
+1. Create an app in the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard).
+2. Set Redirect URI to `http://127.0.0.1:3000/callback` (for Client PKCE) and `http://127.0.0.1:3000/api/auth/callback/spotify` (for NextAuth).
+3. Copy Client ID/Secret to `.env.local` or the in-app Setup Wizard.
+
+### Deezer
+1. Since Deezer's API is closed to new apps, we use the "ARL Cookie" method.
+2. Log in to Deezer.com.
+3. Open Developer Tools (F12) > Application > Cookies.
+4. Copy the value of the `arl` cookie.
+5. Paste it into the Deezer Setup Wizard in SonoSync.
+
+### YouTube Music
+1. Create a project in [Google Cloud Console](https://console.cloud.google.com/).
+2. Enable **YouTube Data API v3**.
+3. Create OAuth Credentials (Web App).
+4. Add Redirect URI: `http://127.0.0.1:3000/api/auth/callback/google`.
+5. Add yourself to "Test Users" in the OAuth Consent Screen (or publish the app).
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📄 License
+
+This project is licensed under the MIT License.

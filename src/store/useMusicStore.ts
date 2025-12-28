@@ -7,6 +7,7 @@ interface TransferState {
     destinationPlatform: Platform | null;
     selectedPlaylist: Playlist | null;
     spotifyToken: string | null;
+    deezerArl: string | null;
 
     // Data
     sourcePlaylists: Playlist[];
@@ -25,6 +26,7 @@ interface TransferState {
     setSourcePlaylists: (playlists: Playlist[]) => void;
     selectPlaylist: (playlist: Playlist) => void;
     setSpotifyToken: (token: string | null) => void;
+    setDeezerArl: (arl: string | null) => void;
     setSourceTracks: (tracks: Track[]) => void;
     setMatches: (matches: TransferState['matches']) => void;
 
@@ -36,6 +38,7 @@ export const useMusicStore = create<TransferState>((set) => ({
     destinationPlatform: null,
     selectedPlaylist: null,
     spotifyToken: null,
+    deezerArl: null,
     sourcePlaylists: [],
     sourceTracks: [],
     matches: [],
@@ -45,6 +48,7 @@ export const useMusicStore = create<TransferState>((set) => ({
     setSourcePlaylists: (playlists) => set({ sourcePlaylists: playlists }),
     selectPlaylist: (playlist) => set({ selectedPlaylist: playlist }),
     setSpotifyToken: (token) => set({ spotifyToken: token }),
+    setDeezerArl: (arl) => set({ deezerArl: arl }),
     setSourceTracks: (tracks) => set({ sourceTracks: tracks }),
     setMatches: (matches) => set({ matches }),
 
@@ -53,6 +57,7 @@ export const useMusicStore = create<TransferState>((set) => ({
         destinationPlatform: null,
         selectedPlaylist: null,
         spotifyToken: null,
+        deezerArl: null,
         sourcePlaylists: [],
         sourceTracks: [],
         matches: []

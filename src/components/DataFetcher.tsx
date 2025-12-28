@@ -3,12 +3,13 @@
 import { useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useMusicStore } from "@/store/useMusicStore";
+import { fetchDeezerPlaylists } from "@/actions/deezer";
 import { getUserPlaylists } from "@/actions/spotify";
 import { getClientSpotifyPlaylists } from "@/lib/spotify-client";
 
 export function DataFetcher() {
     const { data: session } = useSession();
-    const { setSourcePlaylists, setSourcePlatform, spotifyToken } = useMusicStore();
+    const { setSourcePlaylists, setSourcePlatform, spotifyToken, deezerArl } = useMusicStore();
 
     useEffect(() => {
         async function loadData() {
@@ -24,7 +25,19 @@ export function DataFetcher() {
                 return;
             }
 
-            // 2. Check for Server-Side Session (Deezer, Apple, Google, or old Spotify)
+            // 2. Check for Deezer ARL
+            if (deezerArl) {
+                setSourcePlatform('deezer');
+                try {
+                    const playlists = await fetchDeezerPlaylists(deezerArl);
+                    setSourcePlaylists(playlists);
+                } catch (e) {
+                    console.error("Failed to fetch Deezer playlists", e);
+                }
+                return;
+            }
+
+            // 3. Check for Server-Side Session (Apple, Google, or old Spotify)
             if (session?.accessToken) {
                 // If it's Spotify via NextAuth, we might still want to support it if it works?
                 // But for now, we assume PKCE is the primary way for Spotify.
@@ -45,10 +58,10 @@ export function DataFetcher() {
             }
         }
 
-        if (spotifyToken || (session?.provider === 'spotify')) {
+        if (spotifyToken || deezerArl || (session?.provider === 'spotify')) {
             loadData();
         }
-    }, [session, spotifyToken, setSourcePlaylists, setSourcePlatform]);
+    }, [session, spotifyToken, deezerArl, setSourcePlaylists, setSourcePlatform]);
 
     return null;
 }

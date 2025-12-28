@@ -19,7 +19,7 @@ interface PlatformCardProps {
 
 export function PlatformCard({ platform, name, color }: PlatformCardProps) {
     const { data: session } = useSession();
-    const { spotifyToken, setSpotifyToken } = useMusicStore();
+    const { spotifyToken, setSpotifyToken, deezerArl, setDeezerArl } = useMusicStore();
     const [loading, setLoading] = useState(false);
     const [showSetup, setShowSetup] = useState(false);
     const [isConfigured, setIsConfigured] = useState(false);
@@ -33,18 +33,32 @@ export function PlatformCard({ platform, name, color }: PlatformCardProps) {
                 setSpotifyToken(token);
             }
         }
-    }, [platform, setSpotifyToken, spotifyToken]);
+        if (platform === 'deezer') {
+            const arl = localStorage.getItem('deezer_arl');
+            if (arl && arl !== deezerArl) {
+                setDeezerArl(arl);
+            }
+        }
+    }, [platform, setSpotifyToken, spotifyToken, setDeezerArl, deezerArl]);
 
-    // Check next-auth session provider or custom spotify token
-    const isConnected = platform === 'spotify'
-        ? !!spotifyToken
-        : (session?.provider === platform || (platform === 'youtube' && session?.provider === 'google'));
+    // Check next-auth session provider or custom spotify/deezer token
+    const isConnected = (platform === 'spotify' && !!spotifyToken) ||
+        (platform === 'deezer' && !!deezerArl) ||
+        (session?.provider === platform || (platform === 'youtube' && session?.provider === 'google'));
 
     // Map platform to icon key
     const Icon = Icons[platform as keyof typeof Icons] || Icons.google;
 
     // Check configuration status on mount
     useEffect(() => {
+        if (platform === 'deezer') {
+            // Deezer is always "Ready" to be configured via ARL (manual)
+            // But we can check if it's already connected
+            setIsConfigured(!!localStorage.getItem('deezer_arl'));
+            setCheckingConfig(false);
+            return;
+        }
+
         getProviderStatus().then(status => {
             // Map platform to status key
             const key = platform === 'youtube' ? 'youtube' : platform;
@@ -54,8 +68,7 @@ export function PlatformCard({ platform, name, color }: PlatformCardProps) {
     }, [platform]);
 
     const handleAction = async () => {
-        // For Spotify, we use PKCE flow irrespective of server config check for now,
-        // as client ID is public/env based in our new flow.
+        // For Spotify and Deezer, we use custom flows
         if (platform === 'spotify') {
 
             // Spotify requires 127.0.0.1 for redirect URI, so we must be on that domain
@@ -78,6 +91,17 @@ export function PlatformCard({ platform, name, color }: PlatformCardProps) {
             } catch (e) {
                 console.error("Spotify Auth Action Failed", e);
                 // In case of error (like popup blocked or network), make sure we reset state if needed
+            }
+            return;
+        }
+
+        if (platform === 'deezer') {
+            if (isConnected) {
+                setDeezerArl(null);
+                localStorage.removeItem('deezer_arl');
+                setIsConfigured(false);
+            } else {
+                setShowSetup(true);
             }
             return;
         }

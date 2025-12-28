@@ -74,7 +74,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
             authorization: {
                 params: {
-                    scope: "https://www.googleapis.com/auth/youtube.readonly"
+                    scope: "openid email profile https://www.googleapis.com/auth/youtube",
+                    access_type: "offline",
+                    prompt: "consent"
                 }
             }
         })
